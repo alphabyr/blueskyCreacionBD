@@ -1,2 +1,5 @@
 # El fichero que contiene las claves de acceso
 contraseñas.properties
+
+# Los _pycaches de Python
+__pycache__/

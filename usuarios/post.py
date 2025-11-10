@@ -1,3 +1,17 @@
+# Este script inicia sesión en Bluesky, carga perfiles de un archivo JSON,
+# obtiene los posts de cada usuario y guarda los resultados en otro archivo JSON.
+# Esta diseñado para reanudar el proceso en caso de interrupciones o errores, para así evitar repetir trabajo ya realizado.
+
+# La informacion que se guarda incluye:
+# - cid, que es el Content Identifier del post. Este es un identificador único que apunta al contenido específico del post en la red de Bluesky.
+# - uri, que es el identificador único del post en Bluesky. Se diferencia del cid en que el uri es una referencia más amigable y legible para los usuarios,
+# mientras que el cid es más técnico y específico para la gestión del contenido en la red.
+# - createdAt, la fecha y hora de creación del post.
+# - text, que es el contenido textual del post.
+# - replyCount, que es el número de respuestas que ha recibido el post.
+# - repostCount, que es el número de veces que el post ha sido compartido por otros usuarios.
+# - likeCount, que es el número de "me gusta" que ha recibido el post.
+# - hasEmbed, que indica si el post contiene algún tipo de contenido incrustado, como imágenes, videos o enlaces.
 
 import os
 import time
@@ -5,9 +19,20 @@ import json
 from atproto import Client
 
 class BlueskyPostsFetcher:
-    def __init__(self, handle=None, app_password=None, input_file="profiles_to_scan.json", output_file="user_posts_data.json", posts_per_user_limit=25):
+    def __init__(self, handle=None, app_password=None, input_file=None, output_file=None, posts_per_user_limit=25):
         self.handle = handle or os.environ.get('BSKY_HANDLE')
         self.app_password = app_password or os.environ.get('BSKY_APP_PASSWORD')
+        # Guardar el input y output en la carpeta 'almacen'
+        if input_file is None:
+            input_file = os.path.join('almacen', 'profiles_to_scan.json')
+        else:
+            input_file = os.path.join('almacen', input_file) if not input_file.startswith('almacen'+os.sep) else input_file
+        if output_file is None:
+            output_file = os.path.join('almacen', 'posts_usuarios.json')
+        else:
+            output_file = os.path.join('almacen', output_file) if not output_file.startswith('almacen'+os.sep) else output_file
+        # Crear la carpeta si no existe
+        os.makedirs(os.path.dirname(output_file), exist_ok=True)
         self.input_file = input_file
         self.output_file = output_file
         self.posts_per_user_limit = posts_per_user_limit
