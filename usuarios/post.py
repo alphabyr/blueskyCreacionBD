@@ -13,10 +13,11 @@
 # - likeCount, que es el número de "me gusta" que ha recibido el post.
 # - hasEmbed, que indica si el post contiene algún tipo de contenido incrustado, como imágenes, videos o enlaces.
 
+
 import os
 import time
 import json
-from atproto import Client
+from gestor.conexion import ConexionBluesky
 
 class BlueskyPostsFetcher:
     """
@@ -31,10 +32,9 @@ class BlueskyPostsFetcher:
     
     
     def __init__(self, handle=None, app_password=None, input_file=None, output_file=None, posts_per_user_limit=25):
-        
         self.handle = handle or os.environ.get('BSKY_HANDLE')
         self.app_password = app_password or os.environ.get('BSKY_APP_PASSWORD')
-        
+        self.conexion = ConexionBluesky(self.handle, self.app_password)
         # Guardar el input y output en la carpeta 'almacen'
         if input_file is None:
             input_file = os.path.join('almacen', 'profiles_to_scan.json')
@@ -44,7 +44,6 @@ class BlueskyPostsFetcher:
             output_file = os.path.join('almacen', 'posts_usuarios.json')
         else:
             output_file = os.path.join('almacen', output_file) if not output_file.startswith('almacen'+os.sep) else output_file
-            
         # Crear la carpeta si no existe
         os.makedirs(os.path.dirname(output_file), exist_ok=True)
         self.input_file = input_file
@@ -59,20 +58,9 @@ class BlueskyPostsFetcher:
 
     def login(self):
         """
-        Inicia sesión en la cuenta Bluesky.
-        Raises:
-            RuntimeError: Si ocurre un error durante el inicio de sesión.
-    
+        Inicia sesión en la cuenta Bluesky usando ConexionBluesky.
         """
-        
-        if not self.handle or not self.app_password:
-            raise ValueError("Configura BSKY_HANDLE y BSKY_APP_PASSWORD.")
-        self.client = Client()
-        try:
-            self.client.login(self.handle, self.app_password)
-            print(f"Inicio de sesión exitoso como {self.client.me.handle}")
-        except Exception as e:
-            raise RuntimeError(f"Error al iniciar sesión: {e}")
+        self.client = self.conexion.get_client()
 
     def load_progress(self):
         if os.path.exists(self.output_file):

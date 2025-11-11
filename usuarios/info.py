@@ -29,10 +29,11 @@
 
 
 
+
 import os
 import time
 import json
-from atproto import Client
+from gestor.conexion import ConexionBluesky
 
 class datosUsuario:
     """
@@ -55,29 +56,14 @@ class datosUsuario:
     def __init__(self, handle=None, app_password=None):
         self.handle = handle or os.environ.get('BSKY_HANDLE')
         self.app_password = app_password or os.environ.get('BSKY_APP_PASSWORD')
+        self.conexion = ConexionBluesky(self.handle, self.app_password)
         self.client = None
-        self.logged_in = False
 
     def login(self):
         """
-        Inicia sesión en la cuenta Bluesky.
-        Raises:
-        RuntimeError: Si ocurre un error durante el inicio de sesión.
+        Inicia sesión en la cuenta Bluesky usando ConexionBluesky.
         """
-        
-        if not self.handle or not self.app_password:
-            raise ValueError("Configura BSKY_HANDLE y BSKY_APP_PASSWORD.")
-        
-        self.client = Client() # Crear una instancia del cliente de la API de Bluesky
-        
-        try:
-            self.client.login(self.handle, self.app_password)
-            self.logged_in = True
-            print(f"Inicio de sesión exitoso como {self.client.me.handle}")
-            
-        except Exception as e:
-            self.logged_in = False
-            raise RuntimeError(f"Error al iniciar sesión: {e}")
+        self.client = self.conexion.get_client()
 
 
 
@@ -95,7 +81,7 @@ class datosUsuario:
             RuntimeError: Si no se ha iniciado sesión antes de llamar a este método.
             """
         
-        if not self.logged_in:
+        if not self.client:
             raise RuntimeError("Debes iniciar sesión antes de obtener seguidores.")
         
         all_profiles = []

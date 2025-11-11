@@ -7,24 +7,41 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from usuarios.info import datosUsuario
 from usuarios.post import BlueskyPostsFetcher
 
+
 class MainApp:
+	"""
+	Clase principal para ejecutar la extracción de datos de usuarios y sus posts desde Bluesky.
+	Attributes:
+		bsky_handle (str): El identificador de la cuenta Bluesky.
+		bsky_app_password (str): La contraseña de la aplicación para la cuenta Bluesky.
+		target_account (str): El handle de la cuenta objetivo de la cual se extraerán los seguidores.
+		profile_limit (int): Número máximo de perfiles a obtener.
+		page_limit (int): Número de perfiles por página.
+		output_filename (str): Nombre del archivo JSON donde se guardarán los perfiles obtenidos.    
+	"""
+
 	def __init__(self, bsky_handle=None, bsky_app_password=None, target_account='bsky.app', profile_limit=1000, page_limit=100, output_filename=None):
 		self.bsky_handle = bsky_handle
 		self.bsky_app_password = bsky_app_password
 		self.target_account = target_account
 		self.profile_limit = profile_limit
 		self.page_limit = page_limit
+
 		# Guardar el JSON en la carpeta 'almacen'
 		if output_filename is None:
 			output_filename = os.path.join('almacen', 'profiles_to_scan.json')
 		else:
 			output_filename = os.path.join('almacen', output_filename) if not output_filename.startswith('almacen'+os.sep) else output_filename
+
 		# Crear la carpeta si no existe
 		os.makedirs(os.path.dirname(output_filename), exist_ok=True)
 		self.output_filename = output_filename
 		self.fetcher = datosUsuario(self.bsky_handle, self.bsky_app_password)
 
 	def run(self):
+		"""
+		Ejecuta el proceso de extracción de seguidores y sus posts.
+		"""
 		try:
 			self.fetcher.login()
 			profiles = self.fetcher.fetch_followers(
