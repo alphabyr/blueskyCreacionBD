@@ -16,7 +16,7 @@ class BlueskyPostsFetcher:
     """
     
     
-    def __init__(self, handle=None, app_password=None, input_file=None, output_file=None, posts_per_user_limit=25):
+    def __init__(self, handle=None, app_password=None, input_file=None, output_file=None, posts_per_user_limit=1):
         self.handle = handle or os.environ.get('BSKY_HANDLE')
         self.app_password = app_password or os.environ.get('BSKY_APP_PASSWORD')
         self.conexion = ConexionBluesky(self.handle, self.app_password)
@@ -120,14 +120,16 @@ class BlueskyPostsFetcher:
                     }
                     self.save_progress()
                 except Exception as e:
-                    print(f"ERROR al procesar {handle}: {e}")
-                    if "RateLimitExceeded" in str(e):
-                        print("¡Límite de tasa alcanzado! Pausando 60 segundos...")
+                    error_message = str(e)
+                    if "Profile not found" in error_message or "Actor not found" in error_message:
+                        print(f"⚠️ Saltando a {handle}: El usuario puede haber borrado la cuenta, cambiado de nombre o sido baneado.")
+                        continue
+                    elif "RateLimit" in error_message:
+                        print("⚠️ Límite de velocidad alcanzado. Esperando 60 segundos antes de continuar.")
                         time.sleep(60)
                     else:
-                        self.processed_data[did] = {"profile": profile, "posts": [], "error": str(e)}
-                        self.save_progress()
-                        time.sleep(1)
+                        print(f"❌ Error inesperado con {handle}: {error_message}")
+                        continue
                 time.sleep(1)
         except KeyboardInterrupt:
             print("\nProceso interrumpido por el usuario. El progreso ha sido guardado.")

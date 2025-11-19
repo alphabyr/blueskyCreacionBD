@@ -37,12 +37,11 @@ class MainApp:
             ],
             "entretenimiento": [
                 "jamesgunn.bsky.social", # James Gunn
-                "markhamill.bsky.social", # Mark Hamill
                 "stephenking.bsky.social" # Stephen King
             ],
             "ciencia": [
-                "nasa.gov",              # NASA
-                "sciam.com"              # Scientific American
+                "astrokatie.bsky.social",    # Katie Mack (Astrofísica muy popular y activa)
+                "ericholthaus.bsky.social"   # Eric Holthaus (Meteorólogo y experto en clima)
             ],
              "deportes": [
                 "jeffpassan.bsky.social", # Jeff Passan (Periodista deportivo)
