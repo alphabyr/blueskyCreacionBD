@@ -18,8 +18,8 @@ class MainApp:
         
         # --- CONFIGURACIÓN DE VOLUMEN ---
         # 12 semillas * 800 usuarios = ~9.600 usuarios
-        self.usuarios_por_semilla = 8 
-        self.pool_size = 10 
+        self.usuarios_por_semilla = 1000
+        self.pool_size = 1200
 
         # 3. Las Semillas (CUENTAS DE ALTA ESTABILIDAD)
         # He quitado cuentas personales dudosas y puesto grandes medios/instituciones
