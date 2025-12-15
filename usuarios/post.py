@@ -16,7 +16,7 @@ class BlueskyPostsFetcher:
     """
     
     
-    def __init__(self, handle=None, app_password=None, input_file=None, output_file=None, posts_per_user_limit=1):
+    def __init__(self, handle=None, app_password=None, input_file=None, output_file=None, posts_per_user_limit=25):
         self.handle = handle or os.environ.get('BSKY_HANDLE')
         self.app_password = app_password or os.environ.get('BSKY_APP_PASSWORD')
         self.conexion = ConexionBluesky(self.handle, self.app_password)
