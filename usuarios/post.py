@@ -3,6 +3,7 @@ import json
 import time
 
 from gestor.conexion import ConexionBluesky
+from configuracion.load_config import config
 
 class BlueskyPostsFetcher:
     """
@@ -16,24 +17,30 @@ class BlueskyPostsFetcher:
     """
     
     
-    def __init__(self, handle=None, app_password=None, input_file=None, output_file=None, posts_per_user_limit=25):
+    def __init__(self, handle=None, app_password=None, input_file=None, output_file=None, posts_per_user_limit=None):
         self.handle = handle or os.environ.get('BSKY_HANDLE')
         self.app_password = app_password or os.environ.get('BSKY_APP_PASSWORD')
         self.conexion = ConexionBluesky(self.handle, self.app_password)
-        # Guardar el input y output en la carpeta 'almacen'
+        
+        # Usar configuración desde YAML
+        directorio_almacen = config.get('rutas', 'directorio_almacen')
+        
         if input_file is None:
-            input_file = os.path.join('almacen', 'profiles_to_scan.json')
+            input_file = config.get_ruta_profiles()
         else:
-            input_file = os.path.join('almacen', input_file) if not input_file.startswith('almacen'+os.sep) else input_file
+            input_file = os.path.join(directorio_almacen, input_file) if not input_file.startswith(directorio_almacen+os.sep) else input_file
+            
         if output_file is None:
-            output_file = os.path.join('almacen', 'posts_usuarios.json')
+            output_file = config.get_ruta_posts_json()
         else:
-            output_file = os.path.join('almacen', output_file) if not output_file.startswith('almacen'+os.sep) else output_file
+            output_file = os.path.join(directorio_almacen, output_file) if not output_file.startswith(directorio_almacen+os.sep) else output_file
+            
         # Crear la carpeta si no existe
         os.makedirs(os.path.dirname(output_file), exist_ok=True)
+        
         self.input_file = input_file
         self.output_file = output_file
-        self.posts_per_user_limit = posts_per_user_limit
+        self.posts_per_user_limit = posts_per_user_limit if posts_per_user_limit is not None else config.get_posts_por_usuario_limite()
         self.client = None
         self.processed_data = {}
         self.processed_dids = set()
@@ -125,12 +132,13 @@ class BlueskyPostsFetcher:
                         print(f"⚠️ Saltando a {handle}: El usuario puede haber borrado la cuenta, cambiado de nombre o sido baneado.")
                         continue
                     elif "RateLimit" in error_message:
-                        print("⚠️ Límite de velocidad alcanzado. Esperando 60 segundos antes de continuar.")
-                        time.sleep(60)
+                        delay = config.get_delay_rate_limit()
+                        print(f"⚠️ Límite de velocidad alcanzado. Esperando {delay} segundos antes de continuar.")
+                        time.sleep(delay)
                     else:
                         print(f"❌ Error inesperado con {handle}: {error_message}")
                         continue
-                time.sleep(1)
+                time.sleep(config.get_delay_entre_requests())
         except KeyboardInterrupt:
             print("\nProceso interrumpido por el usuario. El progreso ha sido guardado.")
 

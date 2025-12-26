@@ -12,8 +12,12 @@ if sys.platform == 'win32':
 os.environ['PYSPARK_DRIVER_PYTHON'] = sys.executable
 os.environ['PYSPARK_PYTHON'] = sys.executable
 
-# Configurar Java 17 para PySpark (en lugar de Java 8)
-os.environ['JAVA_HOME'] = r'C:\Program Files\Java\jdk-17'
+# Configurar Java 17 para PySpark - Obtener desde config
+import sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from configuracion.load_config import config
+
+os.environ['JAVA_HOME'] = config.get_java_home()
 
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import (
@@ -343,12 +347,13 @@ def main():
     print_banner("ANÁLISIS DESCRIPTIVO DE DATOS - BLUESKY")
     print_timestamp("Inicio del análisis")
     
-    # Crear la SparkSession con configuración de memoria
+    # Crear la SparkSession con configuración desde YAML
+    spark_config = config.get_spark_config()
     spark = SparkSession.builder \
-        .appName("Bluesky Data Analysis") \
-        .config("spark.driver.memory", "8g") \
-        .config("spark.executor.memory", "8g") \
-        .config("spark.sql.debug.maxToStringFields", "1000") \
+        .appName(spark_config.get('app_name', 'Bluesky Data Analysis')) \
+        .config("spark.driver.memory", spark_config.get('driver_memory', '8g')) \
+        .config("spark.executor.memory", spark_config.get('executor_memory', '8g')) \
+        .config("spark.sql.debug.maxToStringFields", spark_config.get('max_to_string_fields', 1000)) \
         .getOrCreate()
 
     # Instanciar las clases
@@ -356,11 +361,11 @@ def main():
     analizar_post = AnalizarPost(spark)
     analizar_profiles = AnalizarProfiles(spark)
 
-    # Rutas de los archivos JSON (relativas al script)
+    # Rutas de los archivos desde configuración
     script_dir = os.path.dirname(os.path.abspath(__file__))
     base_dir = os.path.dirname(script_dir)
-    ruta_posts = os.path.join(base_dir, "almacen", "posts_usuarios.jsonl")
-    ruta_profiles = os.path.join(base_dir, "almacen", "profiles_to_scan.json")
+    ruta_posts = os.path.join(base_dir, config.get_ruta_posts_jsonl())
+    ruta_profiles = os.path.join(base_dir, config.get_ruta_profiles())
 
     # ─────────────────────────────────────────────────────────
     # CARGA DE DATOS

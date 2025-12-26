@@ -5,6 +5,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from usuarios.info import datosUsuario
 from usuarios.post import BlueskyPostsFetcher
+from configuracion.load_config import config
 
 class MainApp:
     """
@@ -16,10 +17,9 @@ class MainApp:
         self.bsky_handle = bsky_handle
         self.bsky_app_password = bsky_app_password
         
-        # --- CONFIGURACIÓN DE VOLUMEN ---
-        # 12 semillas * 800 usuarios = ~9.600 usuarios
-        self.usuarios_por_semilla = 10
-        self.pool_size = 12
+        # --- CONFIGURACIÓN DESDE YAML ---
+        self.usuarios_por_semilla = config.get_usuarios_por_semilla()
+        self.pool_size = config.get_pool_size()
 
         # 3. Las Semillas (CUENTAS DE ALTA ESTABILIDAD)
         # He quitado cuentas personales dudosas y puesto grandes medios/instituciones
@@ -52,10 +52,11 @@ class MainApp:
         # ---------------------------------------------------------
 
         if output_filename is None:
-            # Mantiene el archivo original para acumular datos
-            output_filename = os.path.join('almacen', 'profiles_to_scan.json')
+            # Usar ruta desde configuración
+            output_filename = config.get_ruta_profiles()
         else:
-            output_filename = os.path.join('almacen', output_filename) if not output_filename.startswith('almacen'+os.sep) else output_filename
+            directorio = config.get('rutas', 'directorio_almacen')
+            output_filename = os.path.join(directorio, output_filename) if not output_filename.startswith(directorio+os.sep) else output_filename
 
         os.makedirs(os.path.dirname(output_filename), exist_ok=True)
         self.output_filename = output_filename
@@ -83,7 +84,7 @@ class MainApp:
                         seguidores_crudos = self.fetcher.fetch_followers(
                             target_account_handle=famoso,
                             profile_limit=self.pool_size,
-                            page_limit=100
+                            page_limit=config.get_page_limit()
                         )
                         
                         if seguidores_crudos:
@@ -115,7 +116,7 @@ class MainApp:
                 app_password=self.bsky_app_password,
                 input_file=os.path.basename(self.output_filename),
                 output_file=None,
-                posts_per_user_limit=25  # Máximo de posts a obtener por usuario
+                posts_per_user_limit=config.get_posts_por_usuario_limite()
             )
             posts_fetcher.run()
 

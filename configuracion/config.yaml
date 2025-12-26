@@ -1,0 +1,84 @@
+# ═══════════════════════════════════════════════════════════════
+# CONFIGURACIÓN CENTRALIZADA DEL PROYECTO BLUESKY
+# ═══════════════════════════════════════════════════════════════
+
+# ───────────────────────────────────────────────────────────────
+# CONFIGURACIÓN DE RUTAS
+# ───────────────────────────────────────────────────────────────
+rutas:
+  # Directorio base donde se almacenan los datos
+  directorio_almacen: "almacen"
+  
+  # Archivos de entrada/salida
+  archivo_profiles: "profiles_to_scan.json"
+  archivo_posts_json: "posts_usuarios.json"
+  archivo_posts_jsonl: "posts_usuarios.jsonl"
+
+# ───────────────────────────────────────────────────────────────
+# CONFIGURACIÓN DE SCRAPING (Main/main.py)
+# ───────────────────────────────────────────────────────────────
+scraping:
+  # Número de usuarios a seleccionar aleatoriamente por cada cuenta semilla
+  usuarios_por_semilla: 10
+  
+  # Número máximo de perfiles a obtener de la API por cada semilla
+  # (se seleccionan usuarios_por_semilla de este pool)
+  pool_size: 12
+  
+  # Límite de páginas de seguidores a recorrer por semilla
+  page_limit: 100
+
+# ───────────────────────────────────────────────────────────────
+# CONFIGURACIÓN DE POSTS (usuarios/post.py)
+# ───────────────────────────────────────────────────────────────
+posts:
+  # Número máximo de posts a obtener por cada usuario
+  posts_por_usuario_limite: 25
+  
+  # Tiempo de espera en segundos entre requests (para evitar rate limits)
+  delay_entre_requests: 1
+  
+  # Tiempo de espera en segundos cuando se alcanza el rate limit
+  delay_rate_limit: 60
+
+# ───────────────────────────────────────────────────────────────
+# CONFIGURACIÓN DE SPARK (analisis/main_analisis.py)
+# ───────────────────────────────────────────────────────────────
+spark:
+  # Nombre de la aplicación Spark
+  app_name: "Bluesky Data Analysis"
+  
+  # Memoria del driver (formato: "Xg" donde X es el número de GB)
+  driver_memory: "8g"
+  
+  # Memoria del executor (formato: "Xg" donde X es el número de GB)
+  executor_memory: "8g"
+  
+  # Límite de campos para toString en Spark SQL
+  max_to_string_fields: 1000
+  
+  # Ruta a Java 17 (ajustar según tu instalación)
+  java_home: "C:\\Program Files\\Java\\jdk-17"
+
+# ───────────────────────────────────────────────────────────────
+# CONFIGURACIÓN DE ANÁLISIS
+# ───────────────────────────────────────────────────────────────
+analisis:
+  # Número de resultados a mostrar en los Top N
+  top_n_resultados: 10
+  
+  # Número de filas a mostrar en las tablas de Spark
+  filas_mostrar: 15
+  
+  # Truncar texto en tablas (False = mostrar completo, número = caracteres)
+  truncar_tablas: 50
+
+# ───────────────────────────────────────────────────────────────
+# CONFIGURACIÓN DE CONVERSIÓN JSONL
+# ───────────────────────────────────────────────────────────────
+conversion:
+  # Mostrar progreso cada N posts procesados
+  intervalo_progreso: 1000
+  
+  # Encoding de archivos
+  encoding: "utf-8"
