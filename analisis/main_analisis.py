@@ -1,14 +1,26 @@
+import os
+import sys
+
+# Configurar Python para PySpark en Windows
+os.environ['PYSPARK_DRIVER_PYTHON'] = sys.executable
+os.environ['PYSPARK_PYTHON'] = sys.executable
+
+# Configurar Java 17 para PySpark (en lugar de Java 8)
+os.environ['JAVA_HOME'] = r'C:\Program Files\Java\jdk-17'
+
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, explode
 from carga_datos import CargaDatos
 from analizar_post import AnalizarPost
 from analizar_profiles import AnalizarProfiles
-import os
 
 def main():
-    # Crear la SparkSession
+    # Crear la SparkSession con configuración de memoria
     spark = SparkSession.builder \
         .appName("Bluesky Data Analysis") \
+        .config("spark.driver.memory", "4g") \
+        .config("spark.executor.memory", "4g") \
+        .config("spark.sql.debug.maxToStringFields", "1000") \
         .getOrCreate()
 
     # Instanciar las clases
