@@ -225,8 +225,9 @@ def analizar_labels(df):
 def analizar_posts_detallado(df_posts_exploded):
     """Análisis detallado de posts"""
     try:
-        if "post.text" not in df_posts_exploded.columns:
-            print("  ⚠️  Columna 'post.text' no disponible")
+        # Verificar que existe la columna 'post'
+        if "post" not in df_posts_exploded.columns:
+            print("  ⚠️  Estructura 'post' no disponible")
             return
         
         print_subsection("3.3.1 Análisis de Contenido de Posts")
@@ -254,8 +255,9 @@ def analizar_posts_detallado(df_posts_exploded):
 def analizar_posts_temporales(df_posts_exploded):
     """Análisis temporal de posts"""
     try:
-        if "post.created_at" not in df_posts_exploded.columns:
-            print("  ⚠️  Columna 'post.created_at' no disponible")
+        # Verificar que existe la columna 'post'
+        if "post" not in df_posts_exploded.columns:
+            print("  ⚠️  Estructura 'post' no disponible")
             return
         
         print_subsection("3.2.1 Distribución Temporal de Posts")
