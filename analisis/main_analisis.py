@@ -2,6 +2,12 @@ import os
 import sys
 from datetime import datetime
 
+# Configurar UTF-8 para Windows
+if sys.platform == 'win32':
+    import codecs
+    sys.stdout = codecs.getwriter('utf-8')(sys.stdout.buffer, 'strict')
+    sys.stderr = codecs.getwriter('utf-8')(sys.stderr.buffer, 'strict')
+
 # Configurar Python para PySpark en Windows
 os.environ['PYSPARK_DRIVER_PYTHON'] = sys.executable
 os.environ['PYSPARK_PYTHON'] = sys.executable
@@ -338,8 +344,8 @@ def main():
     # Crear la SparkSession con configuración de memoria
     spark = SparkSession.builder \
         .appName("Bluesky Data Analysis") \
-        .config("spark.driver.memory", "4g") \
-        .config("spark.executor.memory", "4g") \
+        .config("spark.driver.memory", "8g") \
+        .config("spark.executor.memory", "8g") \
         .config("spark.sql.debug.maxToStringFields", "1000") \
         .getOrCreate()
 
@@ -351,7 +357,7 @@ def main():
     # Rutas de los archivos JSON (relativas al script)
     script_dir = os.path.dirname(os.path.abspath(__file__))
     base_dir = os.path.dirname(script_dir)
-    ruta_posts = os.path.join(base_dir, "almacen", "posts_usuarios.json")
+    ruta_posts = os.path.join(base_dir, "almacen", "posts_usuarios.jsonl")
     ruta_profiles = os.path.join(base_dir, "almacen", "profiles_to_scan.json")
 
     # ─────────────────────────────────────────────────────────
@@ -375,18 +381,38 @@ def main():
 
     # Preparar datos de posts
     df_posts_exploded = None
-    df_profiles_from_posts = None
     
-    if df_posts and "profile" in df_posts.columns:
-        try:
-            df_profiles_from_posts = df_posts.selectExpr("profile.*")
-            if "posts" in df_posts.columns:
-                df_posts_exploded = df_posts.selectExpr(
-                    "profile.did as user_did", 
-                    "explode(posts) as post"
-                )
-        except Exception as e:
-            print(f"⚠️  Error al preparar datos de posts: {e}")
+    # DIAGNÓSTICO: Verificar estado de df_posts
+    print("\n🔍 DIAGNÓSTICO DE POSTS:")
+    if df_posts:
+        print(f"  ✓ df_posts existe y tiene {df_posts.count()} registros (posts)")
+        print(f"  ✓ Columnas disponibles: {df_posts.columns}")
+        
+        # El nuevo formato JSONL ya tiene cada post en una línea separada
+        # Las columnas deberían ser: usuario_did, usuario_handle, cid, uri, createdAt, text, etc.
+        if "usuario_did" in df_posts.columns:
+            print("  ✓ Formato JSONL correcto detectado (un post por línea)")
+            # Los posts ya están "exploded", cada fila es un post
+            df_posts_exploded = df_posts
+            
+            # Renombrar usuario_did a user_did para compatibilidad con el código existente
+            if "usuario_did" in df_posts_exploded.columns and "user_did" not in df_posts_exploded.columns:
+                df_posts_exploded = df_posts_exploded.withColumnRenamed("usuario_did", "user_did")
+            
+            # Crear estructura "post" para compatibilidad con funciones de análisis existentes
+            # que esperan columnas como "post.text", "post.created_at", etc.
+            df_posts_exploded = df_posts_exploded.selectExpr(
+                "user_did",
+                "usuario_handle",
+                "struct(cid, uri, createdAt as created_at, text, replyCount, repostCount, likeCount, hasEmbed) as post"
+            )
+            
+            total_posts = df_posts_exploded.count()
+            print(f"  ✓ Posts procesados exitosamente: {total_posts} posts")
+        else:
+            print("  ⚠️  Formato JSONL inesperado - columna 'usuario_did' no encontrada")
+    else:
+        print("  ✗ df_posts es None o está vacío")
 
     # ═══════════════════════════════════════════════════════════
     # 01. RESUMEN EJECUTIVO
@@ -468,7 +494,7 @@ def main():
         # 3.1 Métricas Generales
         print_subsection("3.1 Métricas Generales")
         analizar_post.contar_registros(df_posts_exploded)
-        analizar_posts_por_usuario(df_posts, df_posts_exploded)
+        analizar_posts_por_usuario(df_posts_exploded, df_posts_exploded)
         
         # 3.2 Análisis Temporal
         print_subsection("3.2 Análisis Temporal")
