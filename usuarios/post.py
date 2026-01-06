@@ -1,9 +1,15 @@
 import os
+import sys
 import json
 import time
+from pathlib import Path
+
+# Agregar ruta del proyecto para imports
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from gestor.conexion import ConexionBluesky
 from configuracion.load_config import config
+from seguridad.secure_file_handler import SecureFileHandler
 
 class BlueskyPostsFetcher:
     """
@@ -22,21 +28,18 @@ class BlueskyPostsFetcher:
         self.app_password = app_password or os.environ.get('BSKY_APP_PASSWORD')
         self.conexion = ConexionBluesky(self.handle, self.app_password)
         
-        # Usar configuración desde YAML
-        directorio_almacen = config.get('rutas', 'directorio_almacen')
+        # Determinar directorio base seguro
+        project_root = Path(__file__).parent.parent
+        directorio_almacen = project_root / config.get('rutas', 'directorio_almacen')
+        
+        # Crear handler seguro para operaciones de archivos
+        self.file_handler = SecureFileHandler(directorio_almacen)
         
         if input_file is None:
-            input_file = config.get_ruta_profiles()
-        else:
-            input_file = os.path.join(directorio_almacen, input_file) if not input_file.startswith(directorio_almacen+os.sep) else input_file
-            
+            input_file = config.get('rutas', 'archivo_profiles')
+        
         if output_file is None:
-            output_file = config.get_ruta_posts_json()
-        else:
-            output_file = os.path.join(directorio_almacen, output_file) if not output_file.startswith(directorio_almacen+os.sep) else output_file
-            
-        # Crear la carpeta si no existe
-        os.makedirs(os.path.dirname(output_file), exist_ok=True)
+            output_file = config.get('rutas', 'archivo_posts_json')
         
         self.input_file = input_file
         self.output_file = output_file
@@ -55,15 +58,19 @@ class BlueskyPostsFetcher:
         self.client = self.conexion.get_client()
 
     def load_progress(self):
-        if os.path.exists(self.output_file):
+        if self.file_handler.existe(self.output_file):
             print(f"Cargando progreso existente desde {self.output_file}...")
             try:
-                with open(self.output_file, 'r', encoding='utf-8') as f:
+                with self.file_handler.abrir_lectura(self.output_file) as f:
                     self.processed_data = json.load(f)
                     self.processed_dids = set(self.processed_data.keys())
                     print(f"Progreso cargado. {len(self.processed_dids)} usuarios ya procesados.")
             except json.JSONDecodeError:
                 print(f"Advertencia: {self.output_file} está corrupto. Empezando de cero.")
+                self.processed_data = {}
+                self.processed_dids = set()
+            except ValueError as e:
+                print(f"Error de seguridad: {e}")
                 self.processed_data = {}
                 self.processed_dids = set()
         else:
@@ -79,11 +86,13 @@ class BlueskyPostsFetcher:
         """
         
         try:
-            with open(self.input_file, 'r', encoding='utf-8') as f:
+            with self.file_handler.abrir_lectura(self.input_file) as f:
                 self.profiles_to_scan = json.load(f)
             print(f"Se cargarán {len(self.profiles_to_scan)} perfiles desde {self.input_file}.")
         except FileNotFoundError:
             raise FileNotFoundError(f"Error: No se encontró el archivo {self.input_file}. Asegúrate de ejecutar 'fetch_profiles.py' primero.")
+        except ValueError as e:
+            raise ValueError(f"Error de seguridad al cargar perfiles: {e}")
 
 
 
@@ -146,13 +155,15 @@ class BlueskyPostsFetcher:
 
     def save_progress(self):
         """
-        Guarda el progreso actual en el archivo JSON de salida.
-                
-        """
-        
-        with open(self.output_file, 'w', encoding='utf-8') as f:
-            json.dump(self.processed_data, f, indent=2, ensure_ascii=False)
-        print("Progreso guardado.")
+        Guarda el progreso actual en el archivo JSON de salida de forma segura.
+        """        
+        try:
+            with self.file_handler.abrir_escritura(self.output_file, permisos=0o600) as f:
+                json.dump(self.processed_data, f, indent=2, ensure_ascii=False)
+            print("Progreso guardado.")
+        except ValueError as e:
+            print(f"Error de seguridad al guardar progreso: {e}")
+            raise
 
 
 

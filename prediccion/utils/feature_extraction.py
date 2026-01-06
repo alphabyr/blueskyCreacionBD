@@ -1,5 +1,5 @@
 """
-Módulo para extraer features de perfiles y posts de Bluesky
+Módulo para extraer características de perfiles y posts de Bluesky
 """
 import numpy as np
 import re
@@ -7,25 +7,25 @@ from datetime import datetime
 from collections import Counter
 
 class FeatureExtractor:
-    """Extrae features de un perfil y sus posts para detección de bots"""
+    """Extrae características de un perfil y sus posts para detección de bots"""
     
     def __init__(self):
         pass
     
     def extract_profile_features(self, profile_data, posts_data=None):
         """
-        Extrae features de un perfil de Bluesky
+        Extrae características de un perfil de Bluesky
         
         Args:
             profile_data: Dict con datos del perfil
             posts_data: List de posts (opcional)
             
         Returns:
-            Dict con features calculados
+            Dict con características calculadas
         """
         features = {}
         
-        # ── FEATURES DE PERFIL ──
+        # ── CARACTERÍSTICAS DE PERFIL ──
         
         # Edad de la cuenta (días desde creación)
         if 'created_at' in profile_data and profile_data['created_at']:
@@ -70,12 +70,12 @@ class FeatureExtractor:
         else:
             features['posts_per_day'] = 0
         
-        # ── FEATURES DE POSTS ──
+        # ── CARACTERÍSTICAS DE POSTS ──
         if posts_data and len(posts_data) > 0:
             post_features = self._extract_post_features(posts_data)
             features.update(post_features)
         else:
-            # Features por defecto si no hay posts
+            # Características por defecto si no hay posts
             features.update({
                 'avg_post_length': 0,
                 'std_post_length': 0,
@@ -91,7 +91,7 @@ class FeatureExtractor:
         return features
     
     def _extract_post_features(self, posts):
-        """Extrae features de una lista de posts"""
+        """Extrae características de una lista de posts"""
         features = {}
         
         if not posts or len(posts) == 0:

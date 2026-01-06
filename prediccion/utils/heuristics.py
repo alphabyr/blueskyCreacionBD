@@ -10,7 +10,7 @@ class HeuristicLabeler:
         Args:
             config: Dict con configuración de heurísticas
         """
-        # Umbrales ULTRA-BAJOS para clasificar >95% de perfiles
+        # Umbrales ULTRA-BAJOS para clasificar más del 95% de perfiles
         self.min_score_bot = config.get('min_score_bot', 0.5)
         self.min_score_humano = config.get('min_score_humano', 0.8)
     
@@ -19,7 +19,7 @@ class HeuristicLabeler:
         Etiqueta un perfil usando sistema de scoring ponderado con umbrales asimétricos
         
         Args:
-            features: Dict con features del perfil
+            features: Dict con características del perfil
             
         Returns:
             int: 1 (bot), 0 (humano), o -1 (incierto)
@@ -27,7 +27,7 @@ class HeuristicLabeler:
         # Calcular score neto (positivo = humano, negativo = bot)
         net_score = self._calculate_weighted_score(features)
         
-        # UMBRALES ULTRA-AGRESIVOS: clasificar >95% de perfiles
+        # UMBRALES ULTRA-AGRESIVOS: clasificar más del 95% de perfiles
         if net_score <= -self.min_score_bot:
             return 1  # Bot (umbral -0.5 = ULTRA AGRESIVO)
         elif net_score >= self.min_score_humano:

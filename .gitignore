@@ -1,12 +1,34 @@
 # El fichero que contiene las claves de acceso
 contraseñas.properties
 
+# Variables de entorno
+.env
+.env.local
+.env.*.local
+
 # Los _pycaches de Python
 __pycache__/
 
 # el entorno virtual de Python
 venv/
+env/
 
 # Ignorar archivos de datos sensibles
 almacen/posts_usuarios.json
 almacen/profiles_to_scan.json
+
+# Modelos ML y datos (potencialmente sensibles)
+prediccion/modelos/*.pkl
+prediccion/modelos/*.joblib
+prediccion/modelos/checksums.json
+prediccion/datos/*.csv
+
+# Logs que puedan contener información sensible
+*.log
+logs/
+
+# Archivos temporales y backups
+*.tmp
+*.bak
+*~
+.DS_Store

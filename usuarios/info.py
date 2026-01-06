@@ -1,8 +1,14 @@
 import os
+import sys
 import time
 import json
+from pathlib import Path
+
+# Agregar ruta del proyecto para imports
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from gestor.conexion import ConexionBluesky
+from seguridad.secure_file_handler import SecureFileHandler
 
 class datosUsuario:
     """
@@ -61,7 +67,7 @@ class datosUsuario:
                 except Exception as e:
                     mensaje_error = str(e)
                     
-                    # --- AQUÍ ESTÁ EL CAMBIO IMPORTANTE ---
+                    # --- CAMBIO IMPORTANTE: DETECCIÓN DE ERRORES ---
                     
                     # Caso 1: El usuario no existe o está mal escrito
                     if "Actor not found" in mensaje_error or "Profile not found" in mensaje_error:
@@ -86,35 +92,48 @@ class datosUsuario:
 
     def save_profiles(self, profiles, output_filename="profiles_to_scan.json"):
         """
-        Guarda los perfiles obtenidos en un archivo JSON.
+        Guarda los perfiles obtenidos en un archivo JSON de forma segura.
         """
         if not profiles:
             print("No hay perfiles nuevos para guardar de esta ejecución.")
             return
-            
-        # Leer perfiles existentes si el archivo existe
-        existing_profiles = []
-        if os.path.exists(output_filename):
-            try:
-                with open(output_filename, 'r', encoding='utf-8') as f:
-                    existing_profiles = json.load(f)
-            except Exception as e:
-                print(f"Advertencia: No se pudieron cargar perfiles existentes: {e}")
-                
-        # Evitar duplicados por DID
-        existing_dids = {p.get('did') for p in existing_profiles if 'did' in p}
-        new_profiles = [p for p in profiles if p.get('did') not in existing_dids]
-        
-        if not new_profiles:
-            print("Todos los perfiles descargados ya existían en la base de datos.")
-            return
-
-        all_profiles = existing_profiles + new_profiles
-        print(f"Guardando {len(new_profiles)} perfiles nuevos (total acumulado: {len(all_profiles)}) en {output_filename}...")
         
         try:
-            with open(output_filename, 'w', encoding='utf-8') as f:
+            # Determinar directorio base seguro
+            project_root = Path(__file__).parent.parent
+            almacen_dir = project_root / 'almacen'
+            
+            # Crear handler seguro
+            handler = SecureFileHandler(almacen_dir)
+            
+            # Leer perfiles existentes si el archivo existe
+            existing_profiles = []
+            if handler.existe(output_filename):
+                try:
+                    with handler.abrir_lectura(output_filename) as f:
+                        existing_profiles = json.load(f)
+                except Exception as e:
+                    print(f"Advertencia: No se pudieron cargar perfiles existentes: {e}")
+            
+            # Evitar duplicados por DID
+            existing_dids = {p.get('did') for p in existing_profiles if 'did' in p}
+            new_profiles = [p for p in profiles if p.get('did') not in existing_dids]
+            
+            if not new_profiles:
+                print("Todos los perfiles descargados ya existían en la base de datos.")
+                return
+
+            all_profiles = existing_profiles + new_profiles
+            print(f"Guardando {len(new_profiles)} perfiles nuevos (total acumulado: {len(all_profiles)}) en {output_filename}...")
+            
+            # Guardar con permisos restrictivos (solo propietario puede leer/escribir)
+            with handler.abrir_escritura(output_filename, permisos=0o600) as f:
                 json.dump(all_profiles, f, indent=4, ensure_ascii=False)
             print(f"¡Datos guardados correctamente!")
+            
+        except ValueError as e:
+            print(f"Error de seguridad: {e}")
+            raise
         except Exception as e:
             print(f"Error al guardar el archivo JSON: {e}")
+            raise

@@ -12,7 +12,7 @@ class Config:
     _config_data = None
     
     def __new__(cls):
-        """Singleton pattern - solo una instancia de Config"""
+        """Patrón Singleton - garantiza una única instancia de Config"""
         if cls._instance is None:
             cls._instance = super(Config, cls).__new__(cls)
         return cls._instance
@@ -48,10 +48,10 @@ class Config:
         
         Args:
             *keys: Claves para navegar en la estructura del YAML
-            default: Valor por defecto si no se encuentra la clave
+            default: Valor devuelto si no se encuentra la clave
             
         Returns:
-            El valor encontrado o el default
+            El valor encontrado o el valor por defecto
         """
         data = self._config_data
         
