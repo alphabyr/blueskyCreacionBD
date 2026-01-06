@@ -13,6 +13,11 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import classification_report, confusion_matrix, roc_auc_score
 import xgboost as xgb
 
+# Agregar directorio raíz al path
+sys.path.append(str(Path(__file__).parent.parent.parent))
+
+from seguridad.secure_model_handler import SecureModelHandler
+
 def cargar_config():
     """Carga la configuración desde config.yaml"""
     config_path = Path(__file__).parent.parent / 'config.yaml'
@@ -49,7 +54,7 @@ def preparar_datos(df, config):
     print(f"    - Humanos (0): {(y == 0).sum()}")
     print(f"    - Bots (1): {(y == 1).sum()}")
     
-    # Dividir en train/test
+    # Dividir en entrenamiento/prueba
     test_size = config['modelo']['train_test_split']['test_size']
     random_state = config['modelo']['train_test_split']['random_state']
     
@@ -60,11 +65,11 @@ def preparar_datos(df, config):
         stratify=y  # Mantener proporción de clases
     )
     
-    print(f"\n✓ Split completado:")
-    print(f"  • Train: {len(X_train)} muestras")
-    print(f"  • Test: {len(X_test)} muestras")
+    print(f"\n✓ División completada:")
+    print(f"  • Entrenamiento: {len(X_train)} muestras")
+    print(f"  • Prueba: {len(X_test)} muestras")
     
-    # Escalar features
+    # Escalar características
     scaler = StandardScaler()
     X_train_scaled = scaler.fit_transform(X_train)
     X_test_scaled = scaler.transform(X_test)
@@ -135,37 +140,33 @@ def evaluar_modelo(model, X_test, y_test, feature_cols):
     return feature_importance
 
 def guardar_modelo(model, scaler, feature_cols, feature_importance, config):
-    """Guarda el modelo y componentes necesarios"""
+    """Guarda el modelo y componentes necesarios de forma segura"""
     print("\n💾 Guardando modelo...")
     
     base_dir = Path(__file__).parent.parent
-    
-    # Crear directorio de modelos si no existe
     modelos_dir = base_dir / 'modelos'
-    modelos_dir.mkdir(parents=True, exist_ok=True)
     
-    # Guardar modelo
-    modelo_path = modelos_dir / 'bot_detector.pkl'
-    with open(modelo_path, 'wb') as f:
-        pickle.dump(model, f)
+    # Crear handler seguro para modelos
+    model_handler = SecureModelHandler(modelos_dir)
+    
+    # Guardar modelo con verificación de integridad
+    modelo_path = model_handler.guardar_modelo(model, 'bot_detector.pkl', permisos=0o600)
     print(f"  ✓ Modelo: {modelo_path}")
     
     # Guardar scaler
-    scaler_path = modelos_dir / 'feature_scaler.pkl'
-    with open(scaler_path, 'wb') as f:
-        pickle.dump(scaler, f)
+    scaler_path = model_handler.guardar_modelo(scaler, 'feature_scaler.pkl', permisos=0o600)
     print(f"  ✓ Scaler: {scaler_path}")
     
     # Guardar columnas de features
-    cols_path = modelos_dir / 'feature_columns.pkl'
-    with open(cols_path, 'wb') as f:
-        pickle.dump(feature_cols, f)
+    cols_path = model_handler.guardar_modelo(feature_cols, 'feature_columns.pkl', permisos=0o600)
     print(f"  ✓ Feature columns: {cols_path}")
     
-    # Guardar feature importance
+    # Guardar feature importance (CSV no necesita pickle)
     importance_path = modelos_dir / 'feature_importance.csv'
     feature_importance.to_csv(importance_path, index=False)
     print(f"  ✓ Feature importance: {importance_path}")
+    
+    print("\n🔒 Checksums de integridad generados y guardados.")
 
 def main():
     print("=" * 80)

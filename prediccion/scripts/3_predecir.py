@@ -14,6 +14,7 @@ sys.path.append(str(Path(__file__).parent.parent.parent))
 
 from prediccion.utils.feature_extraction import FeatureExtractor
 from gestor.conexion import ConexionBluesky
+from seguridad.secure_model_handler import SecureModelHandler
 
 def cargar_config():
     """Carga la configuración desde config.yaml"""
@@ -22,28 +23,36 @@ def cargar_config():
         return yaml.safe_load(f)
 
 def cargar_modelo(config):
-    """Carga el modelo entrenado y componentes"""
+    """Carga el modelo entrenado y componentes de forma segura"""
     base_dir = Path(__file__).parent.parent
     modelos_dir = base_dir / 'modelos'
     
     print("📦 Cargando modelo entrenado...")
     
-    # Cargar modelo
-    modelo_path = modelos_dir / 'bot_detector.pkl'
-    with open(modelo_path, 'rb') as f:
-        model = pickle.load(f)
+    # Crear handler seguro para modelos
+    model_handler = SecureModelHandler(modelos_dir)
     
-    # Cargar scaler
-    scaler_path = modelos_dir / 'feature_scaler.pkl'
-    with open(scaler_path, 'rb') as f:
-        scaler = pickle.load(f)
-    
-    # Cargar columnas de features
-    cols_path = modelos_dir / 'feature_columns.pkl'
-    with open(cols_path, 'rb') as f:
-        feature_cols = pickle.load(f)
-    
-    print("✓ Modelo cargado exitosamente")
+    try:
+        # Cargar modelo con verificación de integridad
+        print("  • Verificando integridad de archivos...")
+        model = model_handler.cargar_modelo('bot_detector.pkl', verificar_integridad=True)
+        print("    ✓ Modelo cargado y verificado")
+        
+        scaler = model_handler.cargar_modelo('feature_scaler.pkl', verificar_integridad=True)
+        print("    ✓ Scaler cargado y verificado")
+        
+        feature_cols = model_handler.cargar_modelo('feature_columns.pkl', verificar_integridad=True)
+        print("    ✓ Feature columns cargado y verificado")
+        
+        print("✓ Todos los componentes cargados exitosamente")
+        
+    except ValueError as e:
+        print(f"\n⚠️  ERROR DE SEGURIDAD: {e}")
+        print("\n🔴 ACCIÓN REQUERIDA:")
+        print("  1. Verifica que los archivos no hayan sido modificados manualmente")
+        print("  2. Si modificaste los modelos, vuelve a entrenar: python scripts/2_entrenar_modelo.py")
+        print("  3. Si sospechas un ataque, elimina la carpeta 'modelos/' y reentrena desde cero")
+        raise
     
     return model, scaler, feature_cols
 
@@ -94,8 +103,8 @@ def obtener_datos_usuario(handle=None, did=None, config=None):
     return profile, posts
 
 def extraer_features(profile, posts):
-    """Extrae features del perfil y posts"""
-    print("\n🔬 Extrayendo features...")
+    """Extrae características del perfil y posts"""
+    print("\n🔬 Extrayendo características...")
     
     extractor = FeatureExtractor()
     features = extractor.extract_profile_features(profile, posts)
