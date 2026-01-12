@@ -1,0 +1,60 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: bluesky-creds
+type: Opaque
+stringData:
+  BSKY_HANDLE: "exampleuser.bsky.social"
+  BSKY_APP_PASSWORD: "example_api_password"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bluesky-web
+  labels:
+    app: bluesky-web
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: bluesky-web
+  template:
+    metadata:
+      labels:
+        app: bluesky-web
+    spec:
+      containers:
+        - name: web
+          image: bluesky-web:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5000
+          envFrom:
+            - secretRef:
+                name: bluesky-creds
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 5000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 5000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: bluesky-web
+spec:
+  selector:
+    app: bluesky-web
+  type: NodePort
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 5000
+      nodePort: 30080
