@@ -262,7 +262,7 @@ python -c "from configuracion.load_config import config; print(config.get('spark
 
 ---
 
-## 🛠️ Troubleshooting
+## 🛠️ Solucion de problemas
 
 ### Variables de Entorno No Reconocidas
 

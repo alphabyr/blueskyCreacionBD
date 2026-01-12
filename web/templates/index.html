@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>BON'T — Detector de Bots</title>
+    <style>
+      :root {
+        --ink: #101418;
+        --teal: #0f8b8d;
+        --mint: #6ef3c5;
+        --amber: #ffb347;
+        --sand: #f6f2ea;
+        --paper: #fbfaf9;
+      }
+      body {
+        font-family: "Space Grotesk", "Sora", "Avenir Next", "Segoe UI", sans-serif;
+        margin: 0;
+        color: var(--ink);
+        background:
+          linear-gradient(120deg, rgba(238, 240, 244, 0.9) 0%, rgba(212, 217, 224, 0.9) 45%, rgba(246, 247, 249, 0.92) 100%),
+          radial-gradient(900px 600px at 15% -5%, rgba(255, 255, 255, 0.6) 0%, transparent 60%),
+          radial-gradient(1000px 700px at 85% 10%, rgba(180, 188, 198, 0.35) 0%, transparent 65%);
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed;
+      }
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        background: url("{{ url_for('static', filename='bont-robot-logo.png') }}") no-repeat;
+        background-size: 420px auto;
+        background-position: 88% 18%;
+        opacity: 0.08;
+        pointer-events: none;
+        z-index: 0;
+      }
+      .container { position: relative; z-index: 1; }
+      .container { max-width: 920px; margin: 0 auto; padding: 3rem 1.5rem 4rem; }
+      .header {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        align-items: start;
+        gap: 2.5rem;
+      }
+      .brand {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.4rem;
+        max-width: 560px;
+      }
+      .brand-text { display: flex; flex-direction: column; gap: 0.25rem; }
+      .wordmark { height: clamp(160px, 16vw, 230px); width: auto; }
+      .mascot { height: 210px; width: auto; margin-top: -10px; }
+      .subtitle {
+        font-family: "Sora", "Space Grotesk", "Avenir Next", "Segoe UI", sans-serif;
+        font-size: 0.78rem;
+        line-height: 1.5;
+        margin: -0.15rem 0 0;
+        letter-spacing: 0.02em;
+        font-weight: 500;
+        max-width: 46ch;
+        color: rgba(16, 20, 24, 0.72);
+      }
+      .panel {
+        margin-top: 3rem;
+        background: var(--sand);
+        border: 2px solid var(--ink);
+        border-radius: 18px;
+        padding: 1.5rem;
+        box-shadow: 10px 10px 0 rgba(17, 17, 17, 0.85);
+        backdrop-filter: blur(4px);
+      }
+      .btn {
+        padding: 0.9rem 1.4rem;
+        background: linear-gradient(135deg, #0f8b8d 0%, #0a6f70 100%);
+        color: #fff;
+        border: 2px solid var(--ink);
+        border-radius: 12px;
+        font-weight: 700;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+        box-shadow: 6px 6px 0 var(--ink);
+        transition: transform 120ms ease, box-shadow 120ms ease, filter 120ms ease;
+        cursor: pointer;
+      }
+      .btn:hover {
+        transform: translate(-2px, -2px);
+        box-shadow: 8px 8px 0 var(--ink);
+        filter: saturate(1.08);
+      }
+      .btn:active {
+        transform: translate(1px, 1px);
+        box-shadow: 4px 4px 0 var(--ink);
+      }
+      .btn:focus-visible {
+        outline: 3px solid #0e3f37;
+        outline-offset: 3px;
+      }
+      .field { margin-bottom: 1rem; }
+      label { display: block; font-weight: 700; margin-bottom: 0.35rem; }
+      .section-title {
+        font-size: 1.05rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        margin: 1rem 0 0.5rem;
+      }
+      .input-row { max-width: 520px; }
+      .radio-group {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        font-weight: 600;
+      }
+      .radio-option {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.6rem;
+        font-weight: 600;
+        background: #fff;
+        border: 2px solid var(--ink);
+        border-radius: 999px;
+        padding: 0.35rem 0.75rem;
+        margin: 0;
+      }
+      input[type="text"], input[type="search"], input[type="email"], input[type="password"],
+      input[type="url"], input[type="tel"], input[type="number"], input[type="date"],
+      input[type="datetime-local"], input[type="time"], input[type="month"], input[type="week"],
+      input[type="color"], select, textarea,
+      input:not([type="radio"]):not([type="checkbox"]) {
+        width: 100%;
+        padding: 0.7rem;
+        border: 2px solid var(--ink);
+        border-radius: 10px;
+        background: #fff;
+        font-family: inherit;
+      }
+      .flash { margin: 0 0 1rem; padding: 0.6rem 0.8rem; border: 2px solid var(--ink); border-radius: 10px; background: #fff; }
+      @media (max-width: 720px) {
+        .header { grid-template-columns: 1fr; }
+        .mascot { height: 140px; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <div class="brand">
+          <img class="wordmark" src="{{ url_for('static', filename='bont-mark.png') }}" alt="BON'T">
+          <div class="brand-text">
+            <p class="subtitle">Detector minimalista de cuentas bot en Bluesky.<br>Escribe un handle o DID y obtén una lectura clara.</p>
+          </div>
+        </div>
+        <img class="mascot" src="{{ url_for('static', filename='bont-robot-logo.png') }}" alt="Robot detective BON'T">
+      </div>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <ul class="flash">
+          {% for category, msg in messages %}
+            <li><strong>{{ category }}:</strong> {{ msg }}</li>
+          {% endfor %}
+          </ul>
+        {% endif %}
+      {% endwith %}
+
+      <form class="panel" action="{{ url_for('predict') }}" method="post">
+        <div class="field input-row">
+          <label for="identifier">Handle o DID</label>
+          <input id="identifier" name="identifier" placeholder="usuario.bsky.social o did:plc:..." />
+        </div>
+
+        <div class="field">
+          <div class="section-title">Tipo</div>
+          <div class="radio-group">
+            <label class="radio-option"><input type="radio" name="id_type" value="handle" checked /> Handle</label>
+            <label class="radio-option"><input type="radio" name="id_type" value="did" /> DID</label>
+          </div>
+        </div>
+
+        <button class="btn" type="submit">Analizar</button>
+      </form>
+    </div>
+  </body>
+</html>

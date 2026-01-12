@@ -28,7 +28,7 @@ pip install -r requirements.txt
 
 Genera una contraseña de aplicación en Bluesky:
 1. Inicia sesión en [Bluesky Web](https://bsky.app)
-2. Ve a **Settings** → **Security** → **App Passwords**
+2. Ve a **Configuracion** → **Seguridad** → **Contrasenas de aplicacion**
 3. Genera una nueva contraseña (formato: `xxxx-xxxx-xxxx-xxxx`)
 
 Configura las variables de entorno (Windows PowerShell):
@@ -54,6 +54,23 @@ python scripts/2_entrenar_modelo.py
 
 # 4. Predecir si un usuario es bot
 python scripts/3_predecir.py
+
+## 🕸️ Interfaz Web (opcional)
+
+Se anadio una interfaz minima en `web/` para analizar un handle/DID desde el navegador.
+
+Cómo usarla (desarrollo):
+
+```bash
+source .venv/bin/activate
+pip install -r requirements.txt
+export BSKY_HANDLE=your_handle
+export BSKY_APP_PASSWORD=your_app_password
+python web/app.py
+# abrir http://127.0.0.1:5000
+```
+
+Nota: La interfaz es para uso local; si la despliegas, anade autenticacion y HTTPS.
 ```
 
 ---
@@ -139,14 +156,14 @@ spark:
 ### 3. Detección de Bots
 - **Ubicación**: `prediccion/`
 - **Función**: Entrena modelo XGBoost para clasificar bots
-- **Features**: 18 características (perfil + comportamiento)
-- **Accuracy**: ~85-92%
+- **Caracteristicas**: 18 caracteristicas (perfil + comportamiento)
+- **Precision**: ~85-92%
 - **Documentación**: Ver [`prediccion/README.md`](prediccion/README.md)
 
 ### 4. Seguridad
 - **Ubicación**: `seguridad/`
 - **Función**: Protección contra path traversal, pickle RCE, y más
-- **Features**: Checksums SHA-256, validación de rutas, permisos restrictivos
+- **Funciones**: Checksums SHA-256, validacion de rutas, permisos restrictivos
 - **Documentación**: Ver [`seguridad/README.md`](seguridad/README.md)
 
 ---
@@ -172,11 +189,11 @@ java -version  # Debe mostrar versión 17
 
 El proyecto implementa varias capas de seguridad:
 
-- ✅ **Path Traversal Prevention**: Validación estricta de rutas
-- ✅ **Pickle RCE Protection**: Checksums SHA-256 en modelos ML
-- ✅ **TOCTOU Mitigation**: Operaciones atómicas de archivos
-- ✅ **Permisos Restrictivos**: Archivos sensibles con permisos 0o600
-- ✅ **Symlink Protection**: Resolución segura de enlaces simbólicos
+- ✅ **Prevencion de path traversal**: Validacion estricta de rutas
+- ✅ **Proteccion contra RCE en pickle**: Checksums SHA-256 en modelos ML
+- ✅ **Mitigacion de TOCTOU**: Operaciones atomicas de archivos
+- ✅ **Permisos restrictivos**: Archivos sensibles con permisos 0o600
+- ✅ **Proteccion de symlinks**: Resolucion segura de enlaces simbolicos
 
 Verificar seguridad del sistema:
 ```bash
@@ -209,17 +226,17 @@ python verificar_seguridad.py
 
 ## 🛠️ Solución de Problemas
 
-### Error: Java version mismatch
-**Solución**: Configura Java 17 como se indica en la sección de requisitos.
+### Error: Version de Java no coincide
+**Solucion**: Configura Java 17 como se indica en la seccion de requisitos.
 
-### Error: Rate limit exceeded
-**Solución**: El script espera automáticamente. Aumenta `delay_entre_requests` en `config.yaml`.
+### Error: Limite de tasa excedido
+**Solucion**: El script espera automaticamente. Aumenta `delay_entre_requests` en `config.yaml`.
 
-### Error: Out of memory (Spark)
-**Solución**: Aumenta `driver_memory` y `executor_memory` en `config.yaml`.
+### Error: Sin memoria (Spark)
+**Solucion**: Aumenta `driver_memory` y `executor_memory` en `config.yaml`.
 
 ### Error: Actor not found
-**Solución**: Normal, algunos usuarios borran sus cuentas. El script los salta automáticamente.
+**Solucion**: Normal, algunos usuarios borran sus cuentas. El script los salta automaticamente.
 
 ---
 

@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Resultado — BON'T</title>
+    <style>
+      :root {
+        --ink: #101418;
+        --teal: #0f8b8d;
+        --mint: #6ef3c5;
+        --amber: #ffb347;
+        --rose: #d64545;
+        --sand: #f6f2ea;
+        --paper: #fbfaf9;
+      }
+      body {
+        font-family: "Space Grotesk", "Sora", "Avenir Next", "Segoe UI", sans-serif;
+        margin: 0;
+        color: var(--ink);
+        background:
+          linear-gradient(120deg, rgba(238, 240, 244, 0.9) 0%, rgba(212, 217, 224, 0.9) 45%, rgba(246, 247, 249, 0.92) 100%),
+          radial-gradient(900px 600px at 15% -5%, rgba(255, 255, 255, 0.6) 0%, transparent 60%),
+          radial-gradient(1000px 700px at 85% 10%, rgba(180, 188, 198, 0.35) 0%, transparent 65%);
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed;
+      }
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        background: url("{{ url_for('static', filename='bont-robot-logo.png') }}") no-repeat;
+        background-size: 360px auto;
+        background-position: 88% 14%;
+        opacity: 0.08;
+        pointer-events: none;
+        z-index: 0;
+      }
+      .container { position: relative; z-index: 1; }
+      .container { max-width: 920px; margin: 0 auto; padding: 3rem 1.5rem 4rem; }
+      .header {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        align-items: start;
+        gap: 2.5rem;
+      }
+      .wordmark { height: clamp(120px, 12vw, 180px); width: auto; }
+      .mascot { height: 180px; width: auto; margin-top: -10px; }
+      .panel {
+        margin-top: 3rem;
+        background: var(--sand);
+        border: 2px solid var(--ink);
+        border-radius: 18px;
+        padding: 1.5rem;
+        box-shadow: 10px 10px 0 rgba(17, 17, 17, 0.85);
+      }
+      .badge { padding: 0.35rem 0.7rem; border-radius: 8px; border: 2px solid var(--ink); font-weight: 700; }
+      .human { background: var(--teal); color: white; }
+      .bot { background: var(--rose); color: white; }
+      .features {
+        margin-top: 1.5rem;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 0.75rem 1rem;
+        list-style: none;
+        padding: 0;
+      }
+      .features li { background: #fff; border: 2px solid var(--ink); border-radius: 10px; padding: 0.5rem 0.75rem; }
+      a { color: var(--ink); font-weight: 700; }
+      @media (max-width: 720px) {
+        .header { grid-template-columns: 1fr; }
+        .mascot { height: 140px; margin-top: 0; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <img class="wordmark" src="{{ url_for('static', filename='bont-mark.png') }}" alt="BON'T">
+        <img class="mascot" src="{{ url_for('static', filename='bont-robot-logo.png') }}" alt="Robot detective BON'T">
+      </div>
+
+      <div class="panel">
+        <h1>Resultado</h1>
+        <p>Usuario: <strong>@{{ result.handle }}</strong> — DID: <code>{{ result.did }}</code></p>
+
+        {% if result.es_bot %}
+          <p class="badge bot">Clasificado como BOT ({{ (result.prob_bot * 100) | round(1) }}%)</p>
+        {% else %}
+          <p class="badge human">Clasificado como HUMANO ({{ (result.prob_humano * 100) | round(1) }}%)</p>
+        {% endif %}
+
+        <h2>Features</h2>
+        <ul class="features">
+          {% for k, v in result.features.items() %}
+            <li><strong>{{ k }}</strong>: {{ v }}</li>
+          {% endfor %}
+        </ul>
+
+        <p><a href="{{ url_for('index') }}">Analizar otro usuario</a></p>
+      </div>
+    </div>
+  </body>
+</html>
